@@ -6,14 +6,14 @@
  *      Any changes to structure should be recorded on the header lines in the overrides file (lines with "//** EQ_REORDERING_...")
  *      The format of the headers is important. There must be spaces between components and colons between f3/f5 values
  *      ie. //** EQ_REORDERING_NAVIGATION F3:0 F5:0 -------------------------
- * 2. Set up the destination folder. By default, this is C:\Temp. If you prefer a difference folder change the location in line 62.
+ * 2. Set up the destination folder. By default, this is C:\Temp. If you prefer a different folder change the location in line 62.
  *      If the folder doesn't exist at runtime, it will be created.
  * 3. Ensure the most recent Expansion Index zip has been downloaded from https://github.com/OoliteProject/oolite-expansion-catalog/releases 
  *      and extracted to C:\Oolite\Maps\OoliteExpansionIndex
  *      If you have extracted the index to a different location, change the path in line 63.
  * 4. Run the program
  * 
- * At completion, assuming no errors were encountered, 3 files will be generated:
+ * At completion, assuming no errors were encountered, 5 files will be generated:
  * 1. C:\temp\f3_hdrequip.txt       This contains all the header equipment items to be pasted directly back into equipment.plist. 
  *                                  This will only be useful if any of the headers have actually changed.
  * 2. C:\temp\f3_ordering.txt       This contains the new data which can be pasted directly back into equipment-overrides.plist
