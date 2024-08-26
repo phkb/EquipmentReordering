@@ -1,4 +1,4 @@
-This commandline tool automates the process of recreating the plist files for the "Loadout By Category" OXPs (https://wiki.alioth.net/index.php/Loadout_by_Category). 
+This commandline tool automates the process of recreating the plist files for the "Loadout By Category" OXPs (https://wiki.alioth.net/index.php/Loadout_by_Category), a mod for the game Oolite (https://www.oolite.space).
 
 Steps to run
 
