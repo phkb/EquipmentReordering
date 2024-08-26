@@ -2,7 +2,7 @@ This commandline tool automates the process of recreating the plist files for th
 
 Steps to run
 
-1. In line 61, ensure the path to the equipment-overrides.plist file is correct. Adjust as required. Make sure paths have double backslashes \\.
+1. In line 61, ensure the path to the current equipment-overrides.plist file is correct. Adjust as required. Make sure paths have double backslashes \\.
      Any changes to structure should be recorded on the header lines in the overrides file (lines with "//** EQ_REORDERING_...")
      The format of the headers is important. There must be spaces between components and colons between f3/f5 values
      ie. //** EQ_REORDERING_NAVIGATION F3:0 F5:0 -------------------------
