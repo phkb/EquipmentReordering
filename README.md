@@ -6,7 +6,7 @@ Steps to run
      Any changes to structure should be recorded on the header lines in the overrides file (lines with "//** EQ_REORDERING_...")
      The format of the headers is important. There must be spaces between components and colons between f3/f5 values
      ie. //** EQ_REORDERING_NAVIGATION F3:0 F5:0 -------------------------
-2. Set up the destination folder. By default, this is C:\Temp. If you prefer a difference folder change the location in line 62.
+2. Set up the destination folder. By default, this is C:\Temp. If you prefer a different folder change the location in line 62.
      If the folder doesn't exist at runtime, it will be created.
 3. Ensure the most recent Expansion Index zip has been downloaded from https://github.com/OoliteProject/oolite-expansion-catalog/releases 
      and extracted to C:\Oolite\Maps\OoliteExpansionIndex
