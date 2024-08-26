@@ -13,7 +13,7 @@ Steps to run
      If you have extracted the index to a different location, change the path in line 63.
 4. Run the program
 
-At completion, assuming no errors were encountered, 3 files will be generated:
+At completion, assuming no errors were encountered, 5 files will be generated:
 1. C:\temp\f3_hdrequip.txt       This contains all the header equipment items to be pasted directly back into equipment.plist. 
                                  This will only be useful if any of the headers have actually changed.
 2. C:\temp\f3_ordering.txt       This contains the new data which can be pasted directly back into equipment-overrides.plist
