@@ -21,6 +21,7 @@ At completion, assuming no errors were encountered, 5 files will be generated:
                                  This will be useful if new equipment items are created. You can paste them as-is into the overrides file
                                  in the desired section (no changes required), and then rerun the steps above to create a new overrides 
                                  file with the new item automatically ordered.
+
 Two addtional files will be generated for 1.90 compatibility
-4. C:\temp\f3_hdrequip190.txt    This contains all the header equipment items to be pasted back to equipment.plist in the 190 version.
-5. C:\temp\f3_ordering190.txt    This contains the new data for 1.90 compatibility which can be pasted directly back to equipment-overrides.plist in the 190 version
+5. C:\temp\f3_hdrequip190.txt    This contains all the header equipment items to be pasted back to equipment.plist in the 190 version.
+6. C:\temp\f3_ordering190.txt    This contains the new data for 1.90 compatibility which can be pasted directly back to equipment-overrides.plist in the 190 version
