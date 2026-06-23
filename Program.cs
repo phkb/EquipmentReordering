@@ -69,10 +69,12 @@ class Program
         // split the original text up into individual lines
         string[] list = orig.Split(['\n']);
 
+        string destination = "C:\\temp";
+
         // make sure our destination exists.
-        if (!Path.Exists("C:\\temp"))
+        if (!Path.Exists(destination))
         {
-            Directory.CreateDirectory("C:\\temp");
+            Directory.CreateDirectory(destination);
         }
 
         int so_f5 = 0; // the sort order index value for the F5 page
@@ -327,13 +329,13 @@ class Program
 
         Console.WriteLine("Creating f3_hdrequip.txt");
         // write all the header info to the header file
-        File.WriteAllText("c:\\temp\\f3_hdrequip.txt", "(\n" + sbEquip.ToString() + "\n)");
-        File.WriteAllText("c:\\temp\\f3_hdrequip190.txt", "(\n" + sbEquip190.ToString() + "\n)");
+        File.WriteAllText(Path.Combine(destination, "f3_hdrequip.txt"), "(\n" + sbEquip.ToString() + "\n)");
+        File.WriteAllText(Path.Combine(destination, "f3_hdrequip190.txt"), "(\n" + sbEquip190.ToString() + "\n)");
 
         Console.WriteLine("Creating f3_ordering.txt");
         // write all the reordering info to the ordering file
-        File.WriteAllText("c:\\temp\\f3_ordering.txt", "{\n" + sbData.ToString().Replace("'", "\"").Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\"") + "\n}");
-        File.WriteAllText("c:\\temp\\f3_ordering190.txt", "{\n" + sbData190.ToString().Replace("'", "\"").Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\"") + "\n}");
+        File.WriteAllText(Path.Combine(destination, "f3_ordering.txt"), "{\n" + sbData.ToString().Replace("'", "\"").Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\"") + "\n}");
+        File.WriteAllText(Path.Combine(destination, "f3_ordering190.txt"), "{\n" + sbData190.ToString().Replace("'", "\"").Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\"") + "\n}");
 
         Console.WriteLine("Checking expansion index for missing equipment items");
         // now we're going to check all the files we didn't look at in the first second, and list any equipment items that might need an entry
@@ -409,7 +411,7 @@ class Program
 
         Console.WriteLine("Creating f3_missing.txt...");
         // write all the missing records to the missing file
-        File.WriteAllText("c:\\temp\\f3_missing.txt", sbmissing.ToString().Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\""));
+        File.WriteAllText(Path.Combine(destination, "f3_missing.txt"), sbmissing.ToString().Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\""));
 
         // and we're done!
         Console.WriteLine("Complete");
