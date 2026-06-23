@@ -1,29 +1,27 @@
-﻿using System.Text;
+using System.Reflection.Metadata.Ecma335;
+using System.Text;
 /*
  * Steps to run
  * 
- * 1. In line 61, ensure the path to the equipment-overrides.plist file is correct. Adjust as required. Make sure paths have double backslashes \\.
+ * 1. In line 59, ensure the path to the equipment-overrides.plist file is correct. Adjust as required. Make sure paths have double backslashes \\.
  *      Any changes to structure should be recorded on the header lines in the overrides file (lines with "//** EQ_REORDERING_...")
  *      The format of the headers is important. There must be spaces between components and colons between f3/f5 values
  *      ie. //** EQ_REORDERING_NAVIGATION F3:0 F5:0 -------------------------
- * 2. Set up the destination folder. By default, this is C:\Temp. If you prefer a different folder change the location in line 62.
- *      If the folder doesn't exist at runtime, it will be created.
- * 3. Ensure the most recent Expansion Index zip has been downloaded from https://github.com/OoliteProject/oolite-expansion-catalog/releases 
+ * 2. Ensure the most recent Expansion Index zip has been downloaded from https://github.com/OoliteProject/oolite-expansion-catalog/releases 
  *      and extracted to C:\Oolite\Maps\OoliteExpansionIndex
- *      If you have extracted the index to a different location, change the path in line 63.
- * 4. Run the program
+ * 3. Run the program
  * 
- * At completion, assuming no errors were encountered, 5 files will be generated:
+ * At completion, assuming no errors were encountered, 3 files will be generated:
  * 1. C:\temp\f3_hdrequip.txt       This contains all the header equipment items to be pasted directly back into equipment.plist. 
  *                                  This will only be useful if any of the headers have actually changed.
  * 2. C:\temp\f3_ordering.txt       This contains the new data which can be pasted directly back into equipment-overrides.plist
  * 3. C:\temp\f3_missing.txt        This contains stubs for any equipment items that are in the Expansion Index but not in our data
- *                                  This will be useful if new equipment items are created. You can paste them as-is into the overrides file
+ *                                  This will be useful if new equipment items are created. You can paste them into the overrides file
  *                                  in the desired section (no changes required), and then rerun the steps above to create a new overrides 
  *                                  file with the new item automatically ordered.
  * Two addtional files will be generated for 1.90 compatibility
- * 4. C:\temp\f3_hdrequip190.txt    This contains all the header equipment items to be pasted back to equipment.plist in the 190 version.
- * 5. C:\temp\f3_ordering190.txt    This contains the new data for 1.90 compatibility which can be pasted directly back to equipment-overrides.plist in the 190 version
+ * 4. C:\temp\f3_hdrequip190.txt    This contains all the header equipment items to be pasted into equipment_190.plist.
+ * 5. C:\temp\f3_ordering190.txt    This contains the new data for 1.90 compatibility which can be pasted directly back to equipment-overrides_190.plist
 */
 
 namespace EquipmentReordering;
@@ -32,7 +30,7 @@ class Program
     // dictionary to aid with creating the header equip items
     private static readonly Dictionary<string, Array> equipKeys = new()
     {
-        { "EQ_REORDERING_REFUELING", new string[2] { "Fuel", "Various items related to the refuelling of your ship or Quirium fuel in general." } },
+        { "EQ_REORDERING_REFUELING", new string[2] { "Fuel", "Various items related to the refueling of your ship or Quirium fuel in general." } },
         { "EQ_REORDERING_GENERAL", new string[2] { "General/Miscellaneous", "General and miscellaneous items not categorised elsewhere." } },
         { "EQ_REORDERING_NAVIGATION", new string[2] { "Navigation", "Items relating to the movement of the ship." } },
         { "EQ_REORDERING_LASERS", new string[2] { "Laser Weapons", "Weapons that can be mounted on your ship's hardpoints." } },
@@ -59,20 +57,6 @@ class Program
         Console.WriteLine("Starting process");
 
         string plistFile = "C:\\Oolite\\AddOns\\Miscellaneous.oxp\\LoadoutByCategory.oxp\\Config\\equipment-overrides.plist";
-        string outputFolder = "C:\\Temp";
-        string indexFolder = "C:\\Oolite\\Maps\\OoliteExpansionIndex";
-
-        // make sure our destination exists.
-        if (!Path.Exists(outputFolder))
-        {
-            Directory.CreateDirectory(outputFolder);
-        }
-
-        // look for a double OoliteExpansionIndex folder, and adjust if required
-        if (Path.Exists(indexFolder + "\\OoliteExpansionIndex"))
-        {
-            indexFolder += "\\OoliteExpansionIndex";
-        }
 
         // check to see if there is a "_192" version file - if so, switch to it.
         if (File.Exists(plistFile.Replace(".plist", "_192.plist"))) 
@@ -86,8 +70,14 @@ class Program
         // split the original text up into individual lines
         string[] list = orig.Split(['\n']);
 
-        int soF5 = 0; // the sort order index value for the F5 page
-        int soF3 = 0; // the purchase_sort_order value for the F3 page
+        // make sure our destination exists.
+        if (!Path.Exists("C:\\temp"))
+        {
+            Directory.CreateDirectory("C:\\temp");
+        }
+
+        int so_f5 = 0; // the sort order index value for the F5 page
+        int so_f3 = 0; // the purchase_sort_order value for the F3 page
         int inc = 4; // the increment value (ie how much to increase/decrease the indexes by with each line of data)
         int sectionCount = 0; // counts which section we are up to
         int totalSections = 0; // the total number of sections found in the input file
@@ -104,14 +94,8 @@ class Program
         // 2 = desc
         // 3 = sort_order
         // 4 = purchase_sort_order
-        string equip = "\t(\r\n\t\t0,\r\n\t\t0,\r\n\t\t\"•• {0} ••\",\r\n\t\t\"{1}\",\r\n\t\t\"{2}\",\r\n\t\t{{\r\n\t\t\tavailable_to_all = yes;" + 
-            "\r\n\t\t\tavailable_to_NPCs = yes;\r\n\t\t\tavailable_to_player = yes;\r\n\t\t\tinstallation_time = 1.0;" + 
-            "\r\n\t\t\tcondition_script = \"loadout_categories_conditions.js\";\r\n\t\t\tsort_order = {3};\r\n\t\t\tpurchase_sort_order = {4};" + 
-            "\r\n\t\t\thide_values = yes;\r\n\t\t\tdisplay_color = \"cyanColor\";\r\n\t\t\tscript_info = {{sortOrder = {3};}};\r\n\t\t}}\r\n\t),";
-        string equipf5 = "\t(\r\n\t\t0,\r\n\t\t0,\r\n\t\t\"•• {0} ••\",\r\n\t\t\"{1}_F5\",\r\n\t\t\"{2}\",\r\n\t\t{{\r\n\t\t\tavailable_to_all = yes;" + 
-            "\r\n\t\t\tavailable_to_NPCs = yes;\r\n\t\t\tavailable_to_player = yes;\r\n\t\t\tinstallation_time = 1.0;" + 
-            "\r\n\t\t\tcondition_script = \"loadout_categories_conditions.js\";\r\n\t\t\tsort_order = {3};\r\n\t\t\tpurchase_sort_order = {4};" + 
-            "\r\n\t\t\thide_values = yes;\r\n\t\t\tdisplay_color = \"cyanColor\";\r\n\t\t\tscript_info = {{sortOrder = {3};}};\r\n\t\t}}\r\n\t),";
+        string equip = "\t(\r\n\t\t0,\r\n\t\t0,\r\n\t\t\"•• {0} ••\",\r\n\t\t\"{1}\",\r\n\t\t\"{2}\",\r\n\t\t{{\r\n\t\t\tavailable_to_all = yes;\r\n\t\t\tavailable_to_NPCs = yes;\r\n\t\t\tavailable_to_player = yes;\r\n\t\t\tinstallation_time = 1.0;\r\n\t\t\tcondition_script = \"loadout_categories_conditions.js\";\r\n\t\t\tsort_order = {3};\r\n\t\t\tpurchase_sort_order = {4};\r\n\t\t\thide_values = yes;\r\n\t\t\tdisplay_color = \"cyanColor\";\r\n\t\t\tscript_info = {{sortOrder = {3};}};\r\n\t\t}}\r\n\t),";
+        string equipf5 = "\t(\r\n\t\t0,\r\n\t\t0,\r\n\t\t\"•• {0} ••\",\r\n\t\t\"{1}_F5\",\r\n\t\t\"{2}\",\r\n\t\t{{\r\n\t\t\tavailable_to_all = yes;\r\n\t\t\tavailable_to_NPCs = yes;\r\n\t\t\tavailable_to_player = yes;\r\n\t\t\tinstallation_time = 1.0;\r\n\t\t\tcondition_script = \"loadout_categories_conditions.js\";\r\n\t\t\tsort_order = {3};\r\n\t\t\tpurchase_sort_order = {4};\r\n\t\t\thide_values = yes;\r\n\t\t\tdisplay_color = \"cyanColor\";\r\n\t\t\tscript_info = {{sortOrder = {3};}};\r\n\t\t}}\r\n\t),";
 
         // these are items we want to force to the top of any group they are in
         string[] force_top = ["'EQ_FUEL'",
@@ -148,6 +132,8 @@ class Program
         }
 
         Console.WriteLine("Reading data...");
+        List<Equip> manager_equip = ExtractEquipmentInfo();
+
         // so lets go through our list, line by line
         for (int i = 0; i < list.Length; i++)
         {
@@ -221,23 +207,23 @@ class Program
                         }
 
                         var item190 = newitem;
-                        newitem = newitem[..pos1start] + (fuelFound ? soF3.ToString() : soF5.ToString()) + // grab everything from the start of the line to our first position, and add in the index
-                            newitem[pos1end..pos2start] + soF3.ToString() + // grab everything from the end of the first position, to the start of the second, and add in the alt index 
-                            newitem[pos2end..pos3start] + (fuelFound ? soF3.ToString() : soF5.ToString()) + // grab everything from the end of the second position, to the start of the third, and add in the index again
+                        newitem = newitem[..pos1start] + (fuelFound ? so_f3.ToString() : so_f5.ToString()) + // grab everything from the start of the line to our first position, and add in the index
+                            newitem[pos1end..pos2start] + so_f3.ToString() + // grab everything from the end of the first position, to the start of the second, and add in the alt index 
+                            newitem[pos2end..pos3start] + (fuelFound ? so_f3.ToString() : so_f5.ToString()) + // grab everything from the end of the second position, to the start of the third, and add in the index again
                             newitem[pos3end..(pos4end + 1)] + " // " + items[0].Trim(); // grab everything from the end of the third position, to the end of the code, and then add in the comment marker and the actual name of the item
                         // add this line to our output data
                         sbData.AppendLine(newitem);
                         // build the 1.90 version
-                        item190 = item190[..pos1start] + soF3.ToString() + // grab everything from the start of the line to our first position, and add in the index
-                            item190[pos1end..pos2start] + soF3.ToString() + // grab everything from the end of the first position, to the start of the second, and add in the alt index 
-                            item190[pos2end..pos3start] + soF3.ToString() + // grab everything from the end of the second position, to the start of the third, and add in the index again
+                        item190 = item190[..pos1start] + so_f3.ToString() + // grab everything from the start of the line to our first position, and add in the index
+                            item190[pos1end..pos2start] + so_f3.ToString() + // grab everything from the end of the first position, to the start of the second, and add in the alt index 
+                            item190[pos2end..pos3start] + so_f3.ToString() + // grab everything from the end of the second position, to the start of the third, and add in the index again
                             item190[pos3end..(pos4end + 1)] + " // " + items[0].Trim(); // grab everything from the end of the third position, to the end of the code, and then add in the comment marker and the actual name of the item
                         // add this line to our 1.90 output data
                         sbData190.AppendLine(item190);
 
                         // increment/decrement the two indexes by our inc value 
-                        soF5 -= inc;
-                        soF3 += inc;
+                        so_f5 -= inc;
+                        so_f3 += inc;
                     }
                     // once we've finished outputting the data, clear the section list so we can go again
                     section.Clear();
@@ -260,10 +246,10 @@ class Program
                     }
                     // calculate the starting point for our two indexes
                     // for the f3 page
-                    soF3 = 1000 * (f3 - 1);
-                    if (soF3 == 0) soF3 = 10;
+                    so_f3 = 1000 * (f3 - 1);
+                    if (so_f3 == 0) so_f3 = 10;
                     // for the f5 page
-                    soF5 = 1000 * ((totalSections + 1) - (f5 - 1)) - 10;
+                    so_f5 = 1000 * ((totalSections + 1) - (f5 - 1)) - 10;
 
                     // put a blank line between sections
                     if (sectionCount > 0)
@@ -274,30 +260,30 @@ class Program
 
                     // grab the extra info for the header equip item
                     Array ar = equipKeys[item];
-                    string? name = "";
-                    string? descr = "";
+                    string? nm = "";
+                    string? ds = "";
                     if (ar is not null)
                     {
-                        if (ar.GetValue(0) is not null) name = ar.GetValue(0).ToString();
-                        if (ar.GetValue(1) is not null) descr = ar.GetValue(1).ToString();
+                        if (ar.GetValue(0) is not null) nm = ar.GetValue(0).ToString();
+                        if (ar.GetValue(1) is not null) ds = ar.GetValue(1).ToString();
                     }
 
                     // build header equip file
-                    sbEquip.AppendLine(String.Format(equip, name, item, descr, soF3.ToString(), soF3.ToString()));
-                    sbEquip.AppendLine(String.Format(equipf5, name, item, descr, (soF5 + 5).ToString(), soF3.ToString()));
+                    sbEquip.AppendLine(String.Format(equip, nm, item, ds, so_f3.ToString(), so_f3.ToString()));
+                    sbEquip.AppendLine(String.Format(equipf5, nm, item, ds, (so_f5 + 5).ToString(), so_f3.ToString()));
 
-                    sbEquip190.AppendLine(String.Format(equip, name, item, descr, soF3.ToString(), soF3.ToString()));
-                    sbEquip190.AppendLine(String.Format(equipf5, name, item, descr, ((soF3 == 10 ? 0 : soF3) + 1000 - 10).ToString(), ((soF3 == 10 ? 0 : soF3) + 1000 - 10).ToString()));
+                    sbEquip190.AppendLine(String.Format(equip, nm, item, ds, so_f3.ToString(), so_f3.ToString()));
+                    sbEquip190.AppendLine(String.Format(equipf5, nm, item, ds, ((so_f3 == 10 ? 0 : so_f3) + 1000 - 10).ToString(), ((so_f3 == 10 ? 0 : so_f3) + 1000 - 10).ToString()));
 
                     // special case for navigation
                     // duplicate with astrogation instead
                     if (item.Contains("_NAVIGATION"))
                     {
-                        sbEquip.AppendLine(String.Format(equip, "Astrogation", "EQ_REORDERING_ASTROGATION", descr, soF3.ToString(), soF3.ToString()));
-                        sbEquip.AppendLine(String.Format(equipf5, "Astrogation", "EQ_REORDERING_ASTROGATION", descr, soF5.ToString(), soF3.ToString()));
+                        sbEquip.AppendLine(String.Format(equip, "Astrogation", "EQ_REORDERING_ASTROGATION", ds, so_f3.ToString(), so_f3.ToString()));
+                        sbEquip.AppendLine(String.Format(equipf5, "Astrogation", "EQ_REORDERING_ASTROGATION", ds, so_f5.ToString(), so_f3.ToString()));
                         
-                        sbEquip190.AppendLine(String.Format(equip, "Astrogation", "EQ_REORDERING_ASTROGATION", descr, soF3.ToString(), soF3.ToString()));
-                        sbEquip190.AppendLine(String.Format(equipf5, "Astrogation", "EQ_REORDERING_ASTROGATION", descr, ((soF3 == 10 ? 0 : soF3) + 1000 - 10).ToString(), ((soF3 == 10 ? 0 : soF3) + 1000 - 10).ToString()));
+                        sbEquip190.AppendLine(String.Format(equip, "Astrogation", "EQ_REORDERING_ASTROGATION", ds, so_f3.ToString(), so_f3.ToString()));
+                        sbEquip190.AppendLine(String.Format(equipf5, "Astrogation", "EQ_REORDERING_ASTROGATION", ds, ((so_f3 == 10 ? 0 : so_f3) + 1000 - 10).ToString(), ((so_f3 == 10 ? 0 : so_f3) + 1000 - 10).ToString()));
                     }
 
                     // add a comment line into our main data file, which acts as a section separator
@@ -319,28 +305,16 @@ class Program
                 // now lets try to find the name of this equipment item
                 string name = "";
                 // put the key into a filename string
-                string filename = indexFolder + "\\equipment\\" + eqkey + ".html";
+                string filename = eqkey + ".html";
                 // add this filename to our list of found files
                 foundFiles.Add(filename);
-                try
+                foreach (Equip eq in manager_equip)
                 {
-                    // try reading all the text from that HTML file
-                    string html = File.ReadAllText(filename);
-                    // if this completes successfully, split the text into lines
-                    string[] lines = html.Split(['\n']);
-                    // loop through the lines of html text
-                    for (int j = 0; j < lines.Length; j++)
-                    {
-                        // look for the "Name" table row
-                        if (lines[j].Contains("<tr><td>Name</td><td>"))
-                        {
-                            // when found, extract the name from the line of data
-                            name = lines[j].Replace("<tr><td>Name</td><td>", "").Replace("</td></tr>", "").Trim();
-                        }
-                    }
+                    if (eq == null) continue;
+                    if (eq.eqKey == eqkey) name = eq.eqName;
                 }
                 // if we couldn't find a file (ie could be from an OXP that isn't in the manager), get whatever text has been placed in the comments of the line
-                catch { name = item.Split("// ")[1]; }
+                if (name == "") { name = item.Split("// ")[1]; }
                 // add the name and data line into our section list, ready for sorting
                 section.Add((name + "                                                                                                                    ").ToString()[..100] + "::" + item);
             }
@@ -354,32 +328,32 @@ class Program
 
         Console.WriteLine("Creating f3_hdrequip.txt");
         // write all the header info to the header file
-        File.WriteAllText(outputFolder + "\\f3_hdrequip.txt", "(\n" + sbEquip.ToString() + "\n)");
-        File.WriteAllText(outputFolder + "\\f3_hdrequip190.txt", "(\n" + sbEquip190.ToString() + "\n)");
+        File.WriteAllText("c:\\temp\\f3_hdrequip.txt", "(\n" + sbEquip.ToString() + "\n)");
+        File.WriteAllText("c:\\temp\\f3_hdrequip190.txt", "(\n" + sbEquip190.ToString() + "\n)");
 
         Console.WriteLine("Creating f3_ordering.txt");
         // write all the reordering info to the ordering file
-        File.WriteAllText(outputFolder + "\\f3_ordering.txt", "{\n" + sbData.ToString().Replace("'", "\"").Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\"") + "\n}");
-        File.WriteAllText(outputFolder + "\\f3_ordering190.txt", "{\n" + sbData190.ToString().Replace("'", "\"").Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\"") + "\n}");
+        File.WriteAllText("c:\\temp\\f3_ordering.txt", "{\n" + sbData.ToString().Replace("'", "\"").Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\"") + "\n}");
+        File.WriteAllText("c:\\temp\\f3_ordering190.txt", "{\n" + sbData190.ToString().Replace("'", "\"").Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\"") + "\n}");
 
         Console.WriteLine("Checking expansion index for missing equipment items");
         // now we're going to check all the files we didn't look at in the first second, and list any equipment items that might need an entry
         // first, get a list of all the HTML files in the equipment folder
-        string[] dir = Directory.GetFiles(indexFolder + "\\equipment\\", "*.html");
+        //string[] dir = Directory.GetFiles("C:\\Oolite\\Maps\\OoliteExpansionIndex\\equipment\\", "*.html");
         // create a new stringbuilder to hold our missing records
-        StringBuilder sbMissing = new();
+        StringBuilder sbmissing = new();
 
         // go through the file list one by one
-        for (int i = 0; i < dir.Length; i++)
+        foreach (Equip eq in manager_equip) 
         {
             // have we considered this file in the first part of the code?
-            if (!foundFiles.Contains(dir[i]))
+            if (!foundFiles.Contains(eq.eqFile))
             {
                 // if not, let's check it out..
                 string name = "";
                 string id = "";
                 // get all the text from the file
-                string html = File.ReadAllText(dir[i]);
+                string html = File.ReadAllText(Path.Combine("C:", "Oolite", "Maps", "OoliteExpansionIndex", eq.eqPath, eq.eqFile));
 
                 // eliminate some files that don't have visible equipment items, based on what we know, or have already extracted
                 if (html.Contains("available_to_player</td><td>false") || html.Contains("available_to_player</td><td>no", StringComparison.CurrentCultureIgnoreCase)) continue;
@@ -430,15 +404,64 @@ class Program
                     }
                 }
                 // output a line into our stringbuilder with the correct format and "xx" for the sort_order
-                sbMissing.AppendLine("    " + ("\"" + id + "\"                                                     ").ToString()[..44] + " = {sort_order = xx; purchase_sort_order = xx; script_info = {sortOrder = xx;};}; // " + name);
+                sbmissing.AppendLine("    " + ("\"" + id + "\"                                                     ").ToString()[..44] + " = {sort_order = xx; purchase_sort_order = xx; script_info = {sortOrder = xx;};}; // " + name);
             }
         }
 
         Console.WriteLine("Creating f3_missing.txt...");
         // write all the missing records to the missing file
-        File.WriteAllText(outputFolder + "\\f3_missing.txt", sbMissing.ToString().Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\""));
+        File.WriteAllText("c:\\temp\\f3_missing.txt", sbmissing.ToString().Replace("&#39;", "'").Replace("&amp;", "&").Replace("&quot;", "\""));
 
         // and we're done!
         Console.WriteLine("Complete");
+    }
+
+    private class Equip(string key, string name, string file, string path)
+    {
+        public string eqKey { get; set; } = key;
+        public string eqName { get; set; } = name;
+        public string eqFile { get; set; } = file;
+        public string eqPath { get; set; } = path;
+    }
+
+    private static List<Equip> ExtractEquipmentInfo()
+    {
+        List<Equip> result = [];
+
+        string[] lines = System.IO.File.ReadAllLines(Path.Combine("C:", "Oolite", "Maps", "OoliteExpansionIndex", "indexAllByIdentifier.html"));
+
+        int reading = 0;
+        string key = "";
+        string name = "";
+        string file = "";
+        string path = "";
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (reading == 2)
+            {
+                name = lines[i].Substring(lines[i].IndexOf(".html") + 7, lines[i].IndexOf("</a>") - (lines[i].IndexOf(".html") + 7));
+                reading = 3;
+            }
+            if (reading == 1)
+            {
+                key = lines[i].Substring(lines[i].IndexOf("\">") + 2, lines[i].IndexOf("</a>") - (lines[i].IndexOf("\">") + 2));
+                file = lines[i].Substring(lines[i].IndexOf("href=") + 6, (lines[i].LastIndexOf(key) - 2) - (lines[i].IndexOf("href=") + 6));
+                string full = file;
+                file = file.Split('/')[2];
+                path = full.Replace(file, "");
+                reading = 2;
+            }
+            if (lines[i].Contains("<td>Equipment</td>")) reading = 1;
+            if (lines[i].Contains("</tr>") && reading > 0)
+            {
+                result.Add(new Equip(key, name, file, path));
+                reading = 0;
+                key = "";
+                name = "";
+                file = "";
+                path = "";
+            }
+        }
+        return result;
     }
 }
